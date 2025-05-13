@@ -5,6 +5,8 @@ import copy
 from .utils import cgs
 from scipy import interpolate
 
+from PyBlastAfterglowMag import rebin
+
 def compute_ek_corr(_vinf, _mass):
     tmp_ek = []
     _vinf = copy.deepcopy(np.asarray(_vinf))
