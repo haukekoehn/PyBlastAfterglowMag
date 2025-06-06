@@ -317,10 +317,10 @@ public:
                 <<" Gamma0="<<p_pars->Gamma0<<" beta0="<<p_pars->beta0<<" < min="<<p_pars->min_beta_0<<"\n";
             exit(1);
         }
-        if (p_pars->E0 < 1e10){
-            (*p_log)(LOG_ERR,AT) << "ish="<<ish<<" il="<<il<<" E0="<<p_pars->E0<<" < min="<<1e10<<"\n";
-            exit(1);
-        }
+        //if (p_pars->E0 < 1e10){
+        //    (*p_log)(LOG_ERR,AT) << "ish="<<ish<<" il="<<il<<" E0="<<p_pars->E0<<" < min="<<1e10<<"\n";
+        //    exit(1);
+        //}
 
         p_spread->m_theta_b0 = p_pars->theta_b0;
         p_pars->prev_x = p_pars->tb0;

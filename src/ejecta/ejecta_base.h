@@ -207,7 +207,7 @@ public:
             for(size_t il = 0; il < nlayers(); il++) {
                 BW_TYPES m_type = select_bw_type(opts,p_log);
                 p_cumShells.push_back(
-                        std::make_unique<CumulativeShell>(Vector {}, nshells(),
+                        std::make_unique<CumulativeShell>(getTbGrid(), nshells(),
                                                           il, n_substeps,m_type,
                                                           commonTables, p_log->getLogLevel())
                                                           );

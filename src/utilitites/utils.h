@@ -192,6 +192,15 @@ size_t indexOfMinimumElement(const std::vector<double>& input)
     return std::distance(input.begin(), ptrMinElement);
 }
 
+bool all_zeros(const Vector & vec){
+    // checks whether all the entries of vec are zero.
+
+    return std::all_of(vec.begin(), vec.end(), [](double x) {
+        return x == 0.0;
+    });
+
+}
+
 bool getBoolOpt(std::string opt, StrStrMap & opts,
                 const char *loc, std::unique_ptr<logger> & p_log, const bool def, const bool req){
 //    opt = "use_dens_prof_behind_jet_for_ejecta";
@@ -873,9 +882,6 @@ public:
 
     static void load1DDataFromGroup(std::string key, Vector & out, H5::Group & grp){
 
-        if (!out.empty()){
-            std::cerr << AT << " container is not isEmpty\n";
-        }
 
         H5::DataSet dataset = grp.openDataSet(key);
         H5::DataType datatype = dataset.getDataType();

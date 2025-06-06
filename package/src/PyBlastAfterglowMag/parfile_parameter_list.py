@@ -1,6 +1,8 @@
 '''
-    List of all the parameters C++ code expects in parfile.par and their defaulr values
+    List of all the parameters C++ code expects in parfile.par and their default values
 '''
+
+from os.path import dirname
 
 default_parfile_main_part = dict(
     pars=dict(
@@ -113,7 +115,7 @@ default_parfile_grb_part = dict(
         do_thermrad_loss = "no",    # [numeric] include thermal radiation from ejecta (UNFINISHED)
         do_eninj_inside_rhs = "no", # [numeric] magnetar-driven ejecta; (UNFINISHED)
 
-        use_1d_id = "yes",          # [I/O] type of the initail data, if 'yes' expects 1D arrays with E,Gamma...
+        use_1d_id = "yes",          # [I/O] type of the initial data, if 'yes' expects 1D arrays with E,Gamma...
         fname_ejecta_id = "id.h5",  # [I/O] file name (in working_dir) with initial data
         load_r0 = "no",             # [I/O] use R0 from the file instead of computing it as R0=beta0 * tb0 * c
         fname_dyn = "dyn.h5",       # [I/O] file name (in working_dir) to save dynamics
@@ -121,7 +123,7 @@ default_parfile_grb_part = dict(
         fname_light_curve = "lc.h5",# [I/O] file name (in working_dir) to save light curve
         fname_sky_map = "skymap.h5",# [I/O] file name (in working_dir) to save raw light curve
 
-        ebl_tbl_fpath = "../../../data/EBL/Franceschini18/table.h5", # if not "none"  -- no EBL correction
+        ebl_tbl_fpath = dirname(dirname(dirname(dirname(__file__)))) + "/data/EBL/Franceschini18/table.h5", # if not "none"  -- no EBL correction
 
         do_nucinj = "no", # [numeric] include r-process heating in ejecta (UNFINISHED)
 

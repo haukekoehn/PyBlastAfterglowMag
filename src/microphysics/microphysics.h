@@ -542,15 +542,12 @@ public: // -------------------- NUMERIC -------------------------------- //
         if ((m_eleMethod==METHODS_SHOCK_ELE::iShockEleNum) && (m_methods_ssc==METHOD_SSC::iNumSSC))
             for (size_t i=0; i < ssc.numbins; i++)
                 total_rad.j[i] += ssc.j[i];
-
         for (size_t i = 0; i < syn.numbins; i++)
             total_rad.a[i] = syn.a[i];
 //        if (m_eleMethod==METHODS_SHOCK_ELE::iShockEleNum)
 //            for (size_t i = 0; i < syn.numbins; i++)
 //                total_rad.a[i] += ssc.a[i];
 
-
-//        std::cout << ssc.a << "\n";
 
         /// 7. compute total numer of electrons (solution)
         double n_ele=0.;

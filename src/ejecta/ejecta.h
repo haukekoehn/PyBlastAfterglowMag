@@ -154,11 +154,12 @@ private:
             exit(1);
         }
         auto & models = getShells();
-        for (auto & model : models)
-            for (auto & bw : model->getBWs())
+        for (auto & model : models){
+            for (auto & bw : model->getBWs()){
                 if (bw->getPars()->do_mphys_in_ppr)
                     bw->evolveElectronDistAndComputeRadiation();
-
+            }
+        }
     }
 
     /// OUTPUT dynamics/electrons
@@ -580,9 +581,10 @@ private:
         Vector _times, _freqs;
         cast_times_freqs(lc_times,lc_freqs,_times,_freqs,lc_freq_to_time,p_log);
         (*p_log)(LOG_INFO,AT) << "Computing and saving Ejecta light curve\n";
-
+        std::cout << "_times.size " << _times.size() << "\n";
         VecVector lcs{}; // [ish*il][it*inu]
         lcs.resize(nshells() * nlayers());
+        std::cout << "lcs.size " << lcs.size() << "\n";
         for (auto & arr : lcs)
             arr.resize(_times.size(), 0.);
 
@@ -625,12 +627,11 @@ private:
                         continue;
                     auto grp = file.openGroup(key);
                     auto & vec = bw->getData(static_cast<BW::Q>(iv));
-                    if (!vec.empty()){
-                        (*p_log)(LOG_ERR,AT) << " container is not isEmpty\n";
+                    if (!vec.empty() && !all_zeros(vec) ){
+                        (*p_log)(LOG_WARN,AT) << " Container for " << static_cast<BW::Q>(iv) << " is not isEmpty or all_zero.\n";
                     }
 
                     Output::load1DDataFromGroup(BW::VARNAMES[iv],vec,grp);
-
                     if ( bw->getData(static_cast<BW::Q>(iv)).empty() ){
                         (*p_log)(LOG_ERR,AT) << " Failed loading v_n="<< key << " group="<<key<<"\n";
                         exit(1);
@@ -641,17 +642,13 @@ private:
 //                    (*p_log)(LOG_WARN,AT) << "Loaded not evolved shell [il="<<il<<", "<<"ish="<<ish<<"] \n";
                     n_empty_shells+=1;
                 }
-                bw->checkEvolutionEnd();
+                //bw->checkEvolutionEnd();
                 bw->getPars()->nr = bw->getData()[BW::iR].size();
             }
             (*p_log)(LOG_INFO,AT) << "Loaded [il="<<il<<"] empty shells "<<n_empty_shells<<"\n";
         }
         file.close();
-//        if ( p_cumShells[0]->getBW(0)->getData()[BW::iR][0] == 0 ){
-//            std::cout << p_cumShells[0]->getBW(0)->getData()[BW::iR] << "\n";
-//            std::cout << " faild" << std::endl;
-//            exit(1);
-//        }
+
 
 #if 0
         LoadH5 ldata;

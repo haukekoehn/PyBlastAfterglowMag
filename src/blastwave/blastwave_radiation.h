@@ -887,14 +887,13 @@ public:
             return false;
 
         /// check memory allocation
-        if (it > m_data[BW::Q::itburst].size()){
+        if (it >= m_data[BW::Q::itburst].size() || it >= m_data[BW::Q::ibeta].size()){
             (*p_log)(LOG_ERR,AT) << " it=" << it << " out of range=m_data[BW::Q::itburst].size()="
                                  << m_data[BW::Q::itburst].size() << " mtburst.size()=" << p_pars->nr << "\n";
             exit(1);
         }
 
         auto & p_syna = p_pars->p_mphys;
-
         /// update the i_end_r with respect to minimum for radiation
         if ((m_data[BW::Q::ibeta][it] < p_syna->beta_min)){
             if (p_pars->i_end_r > it-1)
@@ -905,12 +904,6 @@ public:
                 << " -> i_end_r=" << p_pars->i_end_r << "\n";
             return false;
         }
-
-//        if (p_pars->i_end_r == 0){
-//            (*p_log)(LOG_ERR,AT) << "[ish="<<p_pars->ishell<<" il="<<p_pars->ilayer<<"] "
-//                                 <<"beta0="<<p_pars->beta0<< " i_end_r = 0"<<"\n";
-//            exit(1);
-//        }
 
         double Gamma_ = m_data[BW::Q::iGamma][it]; // TODO should be GammaSh
 
@@ -1154,7 +1147,7 @@ public:
         if (p_mphys->m_eleMethod == METHODS_SHOCK_ELE::iShockEleAnalyt)
             p_mphys->computeSynchrotronSpectrumAnalytic(it);
         else {
-            if (not p_mphys->is_distribution_initialized) // Initialize electron distribution analytically
+            if (not p_mphys->is_distribution_initialized){ // Initialize electron distribution analytically
                 p_mphys->initializeElectronDistribution(
                         m_data[BW::Q::itcomov][it],
                         m_data[BW::Q::iM2][it],
@@ -1162,6 +1155,7 @@ public:
                         m_data[BW::Q::iU_p][it],
                         m_data[BW::Q::ithickness][it]
                 );
+            }
             else // Evolve electron distribution numerically (or analytically)
                 p_mphys->evaluateElectronDistributionNumericMixed(
                         m_data[BW::Q::itcomov][it - 1],m_data[BW::Q::itcomov][it],
@@ -1203,149 +1197,8 @@ public:
         /// evolve
         for (size_t it = 0; it < p_pars->nr; it++) {
             computeMicrophsysics(it);
-#if 0
-            /// compute electron distribution in reverse shock
-            if ( considerReverseShock(it) ){
-                p_mphys_rs->updateSockProperties(//m_data[BW::Q::iR][it],
-                        //m_data[BW::Q::ithickness_rs][it],
-                        m_data[BW::Q::iU_p3][it],
-                        m_data[BW::Q::iGamma][it],
-//                               m_data[Q::iGamma][it],
-                        m_data[BW::Q::iGammaRsh][it],
-                        m_data[BW::Q::itt][it], // TODO WHICH TIME IS HERE? tbirst? tcomov? observer time (TT)
-                        m_data[BW::Q::itcomov][it], // TODO WHICH TIME IS HERE? tbirst? tcomov? observer time (TT)
-//                               m_data[Q::itburst][it], // emission time (TT)
-                        m_data[BW::Q::irho3][it] / CGS::mp,
-                        m_data[BW::Q::iM3][it] / CGS::mp
-                );
 
-                p_mphys_rs->evaluateElectronDistributionAnalytic();
-
-                storeReverseShockPropertiesAndElectronDistributionLimits(
-                        it,const_cast<ElectronAndRadiaionBase *>(p_mphys_rs->getThis()));
-
-                /// compute comoving spectra
-                if (p_pars->m_method_rad == METHODS_RAD::icomovspec) {
-                    if (p_mphys_rs->m_eleMethod == METHODS_SHOCK_ELE::iShockEleAnalyt)
-                        p_mphys_rs->computeSynchrotronSpectrumAnalytic(it
-//                                                                       m_data[BW::Q::iR][it],
-//                                                                       m_data[BW::Q::ithickness_rs][it]
-                                                                       );
-                    else{
-                        if (not p_mphys_rs->is_distribution_initialized)
-//                            p_mphys_rs->is_distribution_initialized = true;
-                            p_mphys_rs->initializeElectronDistribution(
-                                    m_data[BW::Q::itcomov][it],
-                                    m_data[BW::Q::iM3][it],
-                                    m_data[BW::Q::irho3][it],
-                                    m_data[BW::Q::iU_p3][it]
-                                    );
-                        else
-                            p_mphys_rs->evaluateElectronDistributionNumericMixed(
-                                    m_data[BW::Q::itcomov][it - 1],
-                                    m_data[BW::Q::itcomov][it],
-                                    m_data[BW::Q::iM3][it - 1],
-                                    m_data[BW::Q::iM3][it],
-                                    m_data[BW::Q::irho3][it - 1],
-                                    m_data[BW::Q::irho3][it],
-                                    m_data[BW::Q::iR][it - 1],
-                                    m_data[BW::Q::iR][it],
-                                    m_data[BW::Q::ithickness_rs][it - 1] *
-                                    m_data[BW::Q::iGammaRsh][it - 1],  // comoving shock thickness
-                                    m_data[BW::Q::ithickness_rs][it] * m_data[BW::Q::iGammaRsh][it - 1],
-                                    m_data[BW::Q::iU_p3][it - 1],
-                                    m_data[BW::Q::iU_p3][it]);
-                        if (p_mphys_rs->is_distribution_initialized)
-                            p_mphys_rs->storeSynchrotronSpectrumNumericMixed(it);
-                        m_data[BW::Q::igc_rs][it] = p_mphys_rs->gamma_c; // Update (numerical method computes its own gamma_c)
-                    }
-                }
-            }
-
-
-            /// compute electron distribution in forward shock
-            p_mphys->updateSockProperties(//m_data[BW::Q::iR][it],
-                                          //m_data[BW::Q::ithickness][it],
-                                          m_data[BW::Q::iU_p][it],
-                                          m_data[BW::Q::iGamma][it],
-//                               m_data[Q::iGamma][it],
-                                          m_data[BW::Q::iGammaFsh][it],
-                                          m_data[BW::Q::itt][it], // TODO WHICH TIME IS HERE? tbirst? tcomov? observer time (TT)
-                                          m_data[BW::Q::itcomov][it], // TODO WHICH TIME IS HERE? tbirst? tcomov? observer time (TT)
-//                               m_data[Q::itburst][it], // emission time (TT)
-                                          m_data[BW::Q::irho2][it] / CGS::mp,
-//                                          (m_data[BW::Q::iM2][it+1]-m_data[BW::Q::iM2][it]) / CGS::mp
-                                          m_data[BW::Q::iM2][it] / CGS::mp//(m_data[BW::Q::iM2][it+1]-m_data[BW::Q::iM2][it]) / CGS::mp
-                                          );
-
-            /// compute electron injection function / electron spectrum (analytically)
-            p_mphys->evaluateElectronDistributionAnalytic();
-
-            /// store analytic result in the main storage
-            storeShockPropertiesAndElectronDistributionLimits(
-                    it, const_cast<ElectronAndRadiaionBase *>(p_mphys->getThis()));
-
-//            std::cout << m_data[BW::Q::ithickness][it-1]<< " " <<  m_data[BW::Q::ithickness][it] << "\n";
-            /// compute comoving spectra
-            if (p_pars->m_method_rad == METHODS_RAD::icomovspec) {
-                if (p_mphys->m_eleMethod == METHODS_SHOCK_ELE::iShockEleAnalyt)
-                    p_mphys->computeSynchrotronSpectrumAnalytic(it
-//                                                                m_data[BW::Q::iR][it],
-//                                                                m_data[BW::Q::ithickness][it]
-                                                                );
-                else {
-                    if (not p_mphys->is_distribution_initialized) // Initialize electron distribution analytically
-                        p_mphys->initializeElectronDistribution(
-                                m_data[BW::Q::itcomov][it],
-                                m_data[BW::Q::iM2][it],
-                                m_data[BW::Q::irho2][it],
-                                m_data[BW::Q::iU_p][it]
-                                );
-                    else // Evolve electron distribution numerically (or analytically)
-                        p_mphys->evaluateElectronDistributionNumericMixed(
-                                m_data[BW::Q::itcomov][it - 1],
-                                m_data[BW::Q::itcomov][it],
-                                m_data[BW::Q::iM2][it - 1],
-                                m_data[BW::Q::iM2][it],
-                                m_data[BW::Q::irho2][it - 1],
-                                m_data[BW::Q::irho2][it],
-                                m_data[BW::Q::iR][it - 1],
-                                m_data[BW::Q::iR][it],
-                                m_data[BW::Q::ithickness][it - 1] * m_data[BW::Q::iGammaFsh][it -1], // comoving shock thickness dR' = dR * Gamma... (Granot + 1999)
-                                m_data[BW::Q::ithickness][it] * m_data[BW::Q::iGammaFsh][it],
-                                m_data[BW::Q::iU_p][it - 1],
-                                m_data[BW::Q::iU_p][it]
-                                );
-                    if (p_mphys->is_distribution_initialized)
-                        p_mphys->storeSynchrotronSpectrumNumericMixed(it);
-                    m_data[BW::Q::igc][it] = p_mphys->gamma_c; // Update (numerical method computes its own gamma_c)
-                }
-            }
-#endif
         }
-#if 0
-        /// check if electron spectrum failed for any reason
-        if ((m_data[BW::Q::iR][0] > 0) && (p_pars->n_fialed_electrons == p_pars->nr) && (!p_pars->end_evolution)){
-            (*p_log)(LOG_ERR,AT)
-                    << "[il="<<p_pars->ilayer<<", ish="<<p_pars->ishell<<"] "
-                    << " Electron calculation failed for all iterations. Exiting...\n";
-            exit(1);
-        }
-        else if ((m_data[BW::Q::iR][0] > 0) && (p_pars->n_fialed_electrons > 0) && (p_pars->n_fialed_electrons < p_pars->nr)){
-            (*p_log)(LOG_ERR,AT)
-                    << "[il="<<p_pars->ilayer<<", ish="<<p_pars->ishell<<"] "
-                    <<" Electron calculation failed for n=" << p_pars->n_fialed_electrons
-                    << " iterations starting from it=" << p_pars->i0_failed_elecctrons<<"\n";
-        }
-        if (p_pars->loglevel >= LOG_WARN) {
-            double _gm_max = *std::max_element(m_data[BW::Q::igm].begin(), m_data[BW::Q::igm].end());
-            double _gm_min = *std::min_element(m_data[BW::Q::igm].begin(), m_data[BW::Q::igm].end());
-            if (_gm_max == _gm_min) {
-                (*p_log)(LOG_WARN, AT) << " min(gm) == max(gm) = " << _gm_min << "\n";
-                exit(1);
-            }
-        }
-#endif
     }
 
 

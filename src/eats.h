@@ -863,7 +863,6 @@ public: /// flux density evaluation functions
                                  <<", "<<m_tburst[m_i_end_r-1]<<"] Extend tburst grid or shorten tobs grid. \n";
             exit(1);
         }
-
         double flux_pj=0., flux_cj=0.;
         flux_pj = evalSkyMapPW(out, t_obs, freq_obs, offset, obsAngle, imageXXs, imageYYs);
         if (counter_jet) // p_eats->counter_jet
@@ -876,8 +875,10 @@ public: /// flux density evaluation functions
             double attenuation = std::exp(-tau);
             fluxdens = fluxdens * attenuation;
             /// apply attenuation for a skymap as well (never used; as radio at low 'z' is not attenuated)
-            for (auto & val : out[IMG::Q::iintens])
-                val *= attenuation;
+            if (!out.empty()){
+                for (auto & val : out[IMG::Q::iintens])
+                    val *= attenuation;
+            }
         }
         return fluxdens;
     }
@@ -1183,6 +1184,7 @@ private:
             }
             tot_flux += flux_dens;
         }
+
         if (cil>3 && (nskipped_h == cil || nskipped_p == cil || nskipped_r == cil || (nskipped_p+nskipped_r+nskipped_h) == cil)){
             (*p_log)(LOG_WARN,AT)
                 << " Skipped "<<nskipped_p+nskipped_r+nskipped_h<<"/"<<cil<<" cells in computing flux_dens = "<<flux_dens

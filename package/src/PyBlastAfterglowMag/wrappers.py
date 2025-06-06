@@ -9,7 +9,7 @@ from .id_david import prepare_kn_ej_id_2d
 from .id_kenta import EjStruct
 
 def run_grb(working_dir: str, P: dict, run: bool = True, process_skymaps: bool = True,
-            loglevel:str="info", path_to_cpp:str or None=None) -> PyBlastAfterglow:
+            loglevel:str="info", path_to_cpp:str | None=None) -> PyBlastAfterglow:
     """
             conf = {"nx": 64, "ny": 32, "extend_grid": 2, "fwhm_fac": 0.5, "lat_dist_method": "integ",
                 "intp_filter": {"type": None, "sigma": 2, "mode": 'reflect'},  # "gaussian"
@@ -106,7 +106,7 @@ def run_grb(working_dir: str, P: dict, run: bool = True, process_skymaps: bool =
     return pba
 
 def run_kn(working_dir: str, struct: dict, P: dict, run: bool = True, process_skymaps: bool = True,
-            loglevel:str="info", path_to_cpp:str or None=None) -> PyBlastAfterglow:
+            loglevel:str="info", path_to_cpp:str | None=None) -> PyBlastAfterglow:
     """
             conf = {"nx": 64, "ny": 32, "extend_grid": 2, "fwhm_fac": 0.5, "lat_dist_method": "integ",
                 "intp_filter": {"type": None, "sigma": 2, "mode": 'reflect'},  # "gaussian"
@@ -120,7 +120,17 @@ def run_kn(working_dir: str, struct: dict, P: dict, run: bool = True, process_sk
     """
     # clean he temporary direcotry
     if run and os.path.isdir(working_dir):
-        shutil.rmtree(working_dir)
+        run_bws = (P["kn"].get("run_bws", "yes") == "yes")
+        if run_bws:
+            shutil.rmtree(working_dir)
+        else:
+            parfile_path = os.path.join(working_dir, "parfile.par")
+            if os.path.isfile(parfile_path):
+                os.remove(parfile_path)
+            idfile_path = os.path.join(working_dir, "id_pw.h5")
+            if os.path.isfile(idfile_path):
+                os.remove(os.path.join(working_dir, "id_pw.h5"))
+
     if not os.path.isdir(working_dir):
         os.mkdir(working_dir)
 
@@ -192,8 +202,9 @@ def run_kn(working_dir: str, struct: dict, P: dict, run: bool = True, process_sk
         type = P["kn"]["eats_type"]
         del P["kn"]["eats_type"]
     P["kn"]["fname_ejecta_id"] = "id_a.h5" if type == "a" else "id_pw.h5"
+    P["kn"]["use_1d_id"] = "no"
     P["kn"]["method_eats"] = "piece-wise" if type == "pw" else "adaptive"
-    if (struct["struct"]=="tophat"): P["kn"]["nsublayers"] = 35 # for skymap resolution
+    #if (struct["struct"]=="tophat"): P["kn"]["nsublayers"] = 35 # for skymap resolution
     grb_skymap_config = None
     if "skymap_conf" in P["kn"].keys():
         grb_skymap_config = copy.deepcopy(P["kn"]["skymap_conf"])
